@@ -35,9 +35,7 @@ export default function App() {
             <a href="/dashboard" className="text-gray-600 hover:text-primary">Dashboard</a>
           </nav>
           <div className="flex items-center space-x-4">
-            <Button className="hidden md:flex">
-              <Wallet className="mr-2 h-4 w-4" /> Connect Wallet
-            </Button>
+              <w3m-button />
             <button
               className="md:hidden text-gray-600 hover:text-primary"
               onClick={() => setIsMenuOpen(!isMenuOpen)}

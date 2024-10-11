@@ -6,6 +6,7 @@ import BaseTrustLanding from "./pages/LandingPage.jsx";
 import App from "./pages/App.jsx";
 import ChitFund from "./pages/ChitFund.jsx";
 import ChitFunds from "./pages/ChitFunds.jsx";
+import { AppKitProvider } from "./WalletProvider";
 
 const router = createBrowserRouter([
   {
@@ -15,12 +16,6 @@ const router = createBrowserRouter([
   {
     path: "/app",
     element: <App />,
-    children: [
-      {
-        path: "/app/:fundid",
-        element: <ChitFund />
-      }
-    ]
   },
   {
     path: "/chitfund",
@@ -36,6 +31,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
+    <AppKitProvider>
     <RouterProvider router={router} />
+    </AppKitProvider>
   </StrictMode>
 );
