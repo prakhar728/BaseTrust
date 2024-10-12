@@ -7,7 +7,8 @@ contract ChitFund {
     uint256 public totalParticipants;
     uint256 public currentCycle;
     uint256 public totalCycles;
-    uint256[] public contributionDeadlines; // Timestamps for each cycle
+    uint256 public cycleDuration; // Duration in months (or seconds if you prefer using seconds)
+    uint256 public startTime; // Start timestamp (UNIX format)
     uint256 public collateralAmount; // 10% of contributionAmount
     bool public fundStarted;
 
@@ -42,34 +43,30 @@ contract ChitFund {
      * @param _organizer The address of the organizer
      * @param _contributionAmountInEther Contribution amount per cycle in ETH (e.g., 0.001 for 0.001 ETH)
      * @param _totalParticipants Total number of participants
-     * @param _contributionDeadlines Array of UNIX timestamps for contribution deadlines
+     * @param _totalCycles Total number of cycles (months or iterations)
+     * @param _cycleDuration Duration of each cycle in seconds (if using seconds instead of months)
+     * @param _startTime The UNIX timestamp when the first cycle starts
      * @param _participants Array of participant addresses
      */
     constructor(
         address _organizer,
         uint256 _contributionAmountInEther,
         uint256 _totalParticipants,
-        uint256[] memory _contributionDeadlines,
+        uint256 _totalCycles,
+        uint256 _cycleDuration, // Cycle duration in seconds or months (e.g., 30 days = 2592000 seconds)
+        uint256 _startTime,
         address[] memory _participants
     ) {
         require(_participants.length == _totalParticipants, "Participants count mismatch");
-        require(_contributionDeadlines.length == _totalParticipants, "Deadlines count mismatch");
 
         organizer = _organizer;
         contributionAmount = _contributionAmountInEther * 1 ether; // Convert ETH to Wei
         totalParticipants = _totalParticipants;
-        totalCycles = _totalParticipants;
-        currentCycle = 1;
-        contributionDeadlines = _contributionDeadlines;
+        totalCycles = _totalCycles;
+        cycleDuration = _cycleDuration; // Duration of each cycle (in months or seconds)
+        startTime = _startTime; // The timestamp when the first cycle starts
         collateralAmount = contributionAmount / 10; // 10% of contribution amount as collateral
-
-        // Validate deadlines are in increasing order
-        for (uint256 i = 1; i < contributionDeadlines.length; i++) {
-            require(
-                contributionDeadlines[i] > contributionDeadlines[i - 1],
-                "Deadlines must be in increasing order"
-            );
-        }
+        currentCycle = 1;
 
         // Initialize participants
         for (uint256 i = 0; i < _participants.length; i++) {
@@ -86,13 +83,13 @@ contract ChitFund {
     }
 
     /**
-     * @notice Checks if an address is a participant
-     * @param _addr The address to check
-     * @return True if the address is a participant, false otherwise
+     * @notice Calculates the deadline for the current cycle based on the start time and cycle duration.
+     * @param cycle The cycle number to calculate the deadline for.
+     * @return The UNIX timestamp for the deadline of the specified cycle.
      */
-    function isParticipant(address _addr) public view returns (bool) {
-        uint256 idx = participantIndex[_addr];
-        return participants.length > idx && participants[idx].addr == _addr;
+    function getDeadlineForCycle(uint256 cycle) public view returns (uint256) {
+        require(cycle <= totalCycles, "Cycle out of bounds");
+        return startTime + (cycle - 1) * cycleDuration; // Add cycleDuration in seconds for each cycle
     }
 
     /**
@@ -124,10 +121,9 @@ contract ChitFund {
     function contribute() external payable onlyParticipant {
         require(fundStarted, "Fund has not started yet");
         require(currentCycle <= totalCycles, "All cycles completed");
-        require(
-            block.timestamp <= contributionDeadlines[currentCycle - 1],
-            "Contribution period ended for this cycle"
-        );
+
+        uint256 cycleDeadline = getDeadlineForCycle(currentCycle);
+        require(block.timestamp <= cycleDeadline, "Contribution period ended for this cycle");
         require(msg.value == contributionAmount, "Incorrect contribution amount");
 
         uint256 idx = participantIndex[msg.sender];
@@ -210,5 +206,15 @@ contract ChitFund {
         uint256 idx = participantIndex[_addr];
         Participant storage participant = participants[idx];
         return (participant.hasContributed, participant.hasReceivedFund);
+    }
+
+    /**
+     * @notice Checks if an address is a participant
+     * @param _addr The address to check
+     * @return True if the address is a participant, false otherwise
+     */
+    function isParticipant(address _addr) public view returns (bool) {
+        uint256 idx = participantIndex[_addr];
+        return participants.length > idx && participants[idx].addr == _addr;
     }
 }

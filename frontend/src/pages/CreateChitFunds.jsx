@@ -11,7 +11,7 @@ import { Slider } from "@/components/ui/slider";
 import { Plus, Minus, Loader2 } from "lucide-react";
 import Header from "@/components/header/Header";
 import { ChitFundFactoryAbi, deployedContract } from "@/lib/Contract";
-import { useAccount, useWriteContract } from "wagmi";
+import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -36,13 +36,18 @@ const schema = z.object({
     .number()
     .min(1, "Minimum 1 month")
     .max(60, "Maximum 60 months"),
+  startDate: z.date().min(new Date(), "Start date must be in the future"),
 });
 
 function CreateChitFund() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const { data: hash, writeContract } = useWriteContract()
-  const { addresss } = useAccount()
+  const { address } = useAccount()
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+  })
 
   const {
     register,
@@ -59,6 +64,7 @@ function CreateChitFund() {
       collateralPercentage: 10,
       totalAmount: 1000,
       circulationTime: 12,
+      startDate: new Date(Date.now() + 86400000), // Default to tomorrow
     },
   });
 
@@ -73,17 +79,15 @@ function CreateChitFund() {
     setIsSubmitting(true);
     setSubmitSuccess(false);
     try {
+      const startTimestamp = Math.floor(data.startDate.getTime() / 1000);
 
       writeContract({
         address: deployedContract,
-        ChitFundFactoryAbi,
+        abi: ChitFundFactoryAbi,
         functionName: 'createChitFund',
-        args: [addresss, data.totalAmount, data.numberOfPeople, data.circulationTime, data.addresses],
+        args: [data.totalAmount, data.numberOfPeople, data.circulationTime, 2629746, startTimestamp, data.addresses],
       })
-
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      console.log("Form data submitted:", data);
+      
       setSubmitSuccess(true);
       // Here you would typically send the data to your backend or smart contract
     } catch (error) {
@@ -253,6 +257,23 @@ function CreateChitFund() {
                     {errors.circulationTime && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.circulationTime.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="startDate">Start Date</Label>
+                    <Input
+                      id="startDate"
+                      type="date"
+                      {...register("startDate", { 
+                        setValueAs: (v) => v ? new Date(v) : undefined 
+                      })}
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                    {errors.startDate && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.startDate.message}
                       </p>
                     )}
                   </div>
