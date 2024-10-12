@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Menu, X, Wallet, Users, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAccount, useReadContract } from "wagmi";
+import { useReadContract } from "wagmi";
 
-import ChitFundFactory from "../assets/contracts/ChitFundFactory.json";
-import ChitFund from "../assets/contracts/ChitFund.json";
+import Header from "@/components/header/Header";
+import { ChitFundFactoryAbi, deployedContract } from "@/lib/Contract";
 
 // const chitFunds = [
 //   {
@@ -40,14 +40,12 @@ const fadeIn = {
 };
 
 export default function App() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const [chitFunds, setchitFunds] = useState([]);
-  const contractAddress = import.meta.env.VITE_APP_DEPLOYED_CONTRACTS;
 
   const { data: chitFundsFetch } = useReadContract({
-    abi: ChitFundFactory.abi,
-    address: contractAddress,
+    abi: ChitFundFactoryAbi,
+    address: deployedContract,
     functionName: "getChitFunds",
   });
 
@@ -59,68 +57,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="/" className="flex items-center">
-            <Shield className="h-6 w-6 text-primary mr-2" />
-            <span className="text-xl font-bold text-primary">BaseTrust</span>
-          </a>
-          <nav className="hidden md:flex space-x-4">
-            <a href="/about" className="text-gray-600 hover:text-primary">
-              About
-            </a>
-            <a href="/funds" className="text-gray-600 hover:text-primary">
-              Funds
-            </a>
-            <a href="/dashboard" className="text-gray-600 hover:text-primary">
-              Dashboard
-            </a>
-          </nav>
-          <div className="flex items-center space-x-4">
-            <w3m-button />
-            <button
-              className="md:hidden text-gray-600 hover:text-primary"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
-          </div>
-        </div>
-        {isMenuOpen && (
-          <main className="flex-grow justify-center items-center">
-            <motion.nav
-              className="md:hidden bg-white py-4"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="container mx-auto px-4 flex flex-col space-y-4">
-                <a href="/about" className="text-gray-600 hover:text-primary">
-                  About
-                </a>
-                <a href="/funds" className="text-gray-600 hover:text-primary">
-                  Funds
-                </a>
-                <a
-                  href="/dashboard"
-                  className="text-gray-600 hover:text-primary"
-                >
-                  Dashboard
-                </a>
-                <Button className="w-full">
-                  <Wallet className="mr-2 h-4 w-4" /> Connect Wallet
-                </Button>
-              </div>
-            </motion.nav>
-          </main>
-        )}
-      </header>
-
+      <Header />
       <main className="flex-grow container mx-auto px-4 py-8">
         <motion.h1
           className="text-3xl font-bold text-gray-900 mb-6"
@@ -145,7 +82,7 @@ export default function App() {
                 There are currently no chit funds to display. Check back later
                 or create a new one.
               </p>
-              <Button onClick={() => navigate("/create-chitfund")}>
+              <Button onClick={() => navigate("/chitfund/create")}>
                 Create New Chit Fund
               </Button>
             </motion.div>

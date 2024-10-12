@@ -7,6 +7,7 @@ import App from "./pages/App.jsx";
 import ChitFund from "./pages/ChitFund.jsx";
 import ChitFunds from "./pages/ChitFunds.jsx";
 import { AppKitProvider } from "./WalletProvider";
+import CreateChitFund from "./pages/CreateChitFunds";
 
 const router = createBrowserRouter([
   {
@@ -21,6 +22,10 @@ const router = createBrowserRouter([
     path: "/chitfund",
     element: <ChitFunds />,
     children: [
+      {
+        path: "/chitfund/create",
+        element: <CreateChitFund />
+      },
       {
         path: "/chitfund/:fundid",
         element: <ChitFund />
