@@ -316,40 +316,7 @@ export default function ChitFundPage() {
               </motion.div>
             )}
             {/* 
-            {activeTab === "details" && (
-              <motion.div variants={fadeIn} initial="initial" animate="animate">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Participant Details</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Wallet Address</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Next Due Date</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {chitFundData.participants.map((participant, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="font-mono">
-                              {participant.address}
-                            </TableCell>
-                            <TableCell>{participant.status}</TableCell>
-                            <TableCell>
-                              {participant.dueDate || "N/A"}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-
+            
             {activeTab === "defaulters" && (
               <motion.div variants={fadeIn} initial="initial" animate="animate">
                 <Card>
@@ -402,3 +369,6 @@ export default function ChitFundPage() {
     </div>
   );
 }
+
+
+/// I need to setup a few details, make the collateral thing working, allow everyone to pool in, allow the person to claim the amount, and start the indexer

@@ -25,16 +25,26 @@ contract ChitFund {
     uint256 public totalCollateralStaked;
 
     modifier onlyOrganizer() {
-        require(msg.sender == organizer, "Only organizer can perform this action");
+        require(
+            msg.sender == organizer,
+            "Only organizer can perform this action"
+        );
         _;
     }
 
     modifier onlyParticipant() {
-        require(isParticipant(msg.sender), "Only participants can perform this action");
+        require(
+            isParticipant(msg.sender),
+            "Only participants can perform this action"
+        );
         _;
     }
 
-    event ContributionReceived(address participant, uint256 amount, uint256 cycle);
+    event ContributionReceived(
+        address participant,
+        uint256 amount,
+        uint256 cycle
+    );
     event FundDisbursed(address recipient, uint256 amount, uint256 cycle);
     event CollateralStaked(address participant, uint256 amount);
     event FundStarted();
@@ -60,7 +70,10 @@ contract ChitFund {
         uint256 _startTime,
         address[] memory _participants
     ) {
-        require(_participants.length == _totalParticipants, "Participants count mismatch");
+        require(
+            _participants.length == _totalParticipants,
+            "Participants count mismatch"
+        );
 
         organizer = _organizer;
         name = _name; // Set the name of the ChitFund
@@ -254,13 +267,25 @@ contract ChitFund {
      */
     function getParticipantDetails(
         address _addr
-    ) external view returns (bool hasStakedCollateral, bool hasContributed, bool hasReceivedFund) {
+    )
+        external
+        view
+        returns (
+            bool hasStakedCollateral,
+            bool hasContributed,
+            bool hasReceivedFund
+        )
+    {
         if (!isParticipant(_addr)) {
             return (false, false, false);
         }
         uint256 idx = participantIndex[_addr];
         Participant storage participant = participants[idx];
-        return (participant.hasStakedCollateral, participant.hasContributed, participant.hasReceivedFund);
+        return (
+            participant.hasStakedCollateral,
+            participant.hasContributed,
+            participant.hasReceivedFund
+        );
     }
 
     /**
@@ -271,5 +296,81 @@ contract ChitFund {
     function isParticipant(address _addr) public view returns (bool) {
         uint256 idx = participantIndex[_addr];
         return participants.length > idx && participants[idx].addr == _addr;
+    }
+
+    /**
+     * @notice Returns the next eligible participant who hasn't received the fund in the current cycle
+     * @return The address of the next recipient
+     */
+    function getNextRecipient() public view returns (address) {
+        for (uint256 i = 0; i < participants.length; i++) {
+            if (!participants[i].hasReceivedFund) {
+                return participants[i].addr;
+            }
+        }
+        revert("All participants have received the fund for this cycle.");
+    }
+
+    /**
+     * @notice Returns the contribution amount each participant has to pay in Wei
+     * @return The contribution amount in Wei
+     */
+    function getContributionAmount() public view returns (uint256) {
+        return contributionAmount;
+    }
+
+    /**
+     * @notice Checks if a participant is overdue in making their contribution for the current cycle
+     * @param _participant The address of the participant to check
+     * @return True if the participant is overdue, false otherwise
+     */
+    function isParticipantOverdue(
+        address _participant
+    ) public view returns (bool) {
+        require(isParticipant(_participant), "Address is not a participant");
+        uint256 idx = participantIndex[_participant];
+        Participant storage participant = participants[idx];
+        uint256 cycleDeadline = getDeadlineForCycle(currentCycle);
+
+        if (!participant.hasContributed && block.timestamp > cycleDeadline) {
+            return true; // Participant is overdue if they haven't contributed and the deadline has passed
+        }
+        return false;
+    }
+
+    /**
+     * @notice Retrieves all participants who are currently overdue for their contributions
+     * @return An array of addresses that are overdue
+     */
+    function getOverdueParticipants() external view returns (address[] memory) {
+        uint256 overdueCount = 0;
+        uint256 cycleDeadline = getDeadlineForCycle(currentCycle);
+
+        // First, count the number of overdue participants
+        for (uint256 i = 0; i < participants.length; i++) {
+            if (
+                !participants[i].hasContributed &&
+                block.timestamp > cycleDeadline
+            ) {
+                overdueCount++;
+            }
+        }
+
+        // Initialize the array with the exact size
+        address[] memory overdueParticipants = new address[](overdueCount);
+        uint256 index = 0;
+
+        // Populate the array with overdue participants
+        for (uint256 i = 0; i < participants.length; i++) {
+            if (
+                !participants[i].hasContributed &&
+                block.timestamp > cycleDeadline
+            ) {
+                overdueParticipants[index] = participants[i].addr;
+                index++;
+            }
+        }
+
+        return overdueParticipants;
     }
 }
