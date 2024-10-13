@@ -24,20 +24,20 @@ const router = createBrowserRouter([
     children: [
       {
         path: "/chitfund/create",
-        element: <CreateChitFund />
+        element: <CreateChitFund />,
       },
       {
         path: "/chitfund/:fundid",
-        element: <ChitFund />
-      }
-    ]
-  }
+        element: <ChitFund />,
+      },
+    ],
+  },
 ]);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AppKitProvider>
-    <RouterProvider router={router} />
+      <RouterProvider router={router} />
     </AppKitProvider>
   </StrictMode>
 );

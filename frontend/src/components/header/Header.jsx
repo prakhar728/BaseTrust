@@ -16,11 +16,11 @@ const Header = () => {
           <span className="text-xl font-bold text-primary">BaseTrust</span>
         </a>
         <nav className="hidden md:flex space-x-4">
-          <a href="/about" className="text-gray-600 hover:text-primary">
-            About
-          </a>
-          <a href="/funds" className="text-gray-600 hover:text-primary">
+          <a href="/app" className="text-gray-600 hover:text-primary">
             Funds
+          </a>
+          <a href="/chitfund/create" className="text-gray-600 hover:text-primary">
+            Create
           </a>
           <a href="/dashboard" className="text-gray-600 hover:text-primary">
             Dashboard

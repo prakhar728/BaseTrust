@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 contract ChitFund {
     address public organizer;
+    string public name; // Name of the ChitFund
     uint256 public contributionAmount; // Stored in Wei
     uint256 public totalParticipants;
     uint256 public currentCycle;
@@ -41,6 +42,7 @@ contract ChitFund {
     /**
      * @notice Initializes a new ChitFund contract
      * @param _organizer The address of the organizer
+     * @param _name The name of the ChitFund
      * @param _contributionAmountInEther Contribution amount per cycle in ETH (e.g., 0.001 for 0.001 ETH)
      * @param _totalParticipants Total number of participants
      * @param _totalCycles Total number of cycles (months or iterations)
@@ -50,6 +52,7 @@ contract ChitFund {
      */
     constructor(
         address _organizer,
+        string memory _name,
         uint256 _contributionAmountInEther,
         uint256 _totalParticipants,
         uint256 _totalCycles,
@@ -60,6 +63,7 @@ contract ChitFund {
         require(_participants.length == _totalParticipants, "Participants count mismatch");
 
         organizer = _organizer;
+        name = _name; // Set the name of the ChitFund
         contributionAmount = _contributionAmountInEther * 1 ether; // Convert ETH to Wei
         totalParticipants = _totalParticipants;
         totalCycles = _totalCycles;
@@ -93,6 +97,52 @@ contract ChitFund {
     }
 
     /**
+     * @notice Retrieves public details about the ChitFund
+     * @return _fundAddress Address of the Fund
+     * @return _name The name of the ChitFund
+     * @return _organizer Address of the organizer
+     * @return _contributionAmount Contribution amount per cycle in Wei
+     * @return _totalParticipants Total number of participants
+     * @return _currentCycle The current cycle number
+     * @return _totalCycles The total number of cycles
+     * @return _fundStarted Whether the fund has started or not
+     * @return _totalCollateralStaked Total collateral staked by participants
+     * @return _cycleDuration Duration of each cycle in seconds
+     * @return _startTime The start timestamp of the ChitFund
+     */
+    function getChitFundDetails()
+        external
+        view
+        returns (
+            address _fundAddress,
+            string memory _name,
+            address _organizer,
+            uint256 _contributionAmount,
+            uint256 _totalParticipants,
+            uint256 _currentCycle,
+            uint256 _totalCycles,
+            bool _fundStarted,
+            uint256 _totalCollateralStaked,
+            uint256 _cycleDuration,
+            uint256 _startTime
+        )
+    {
+        return (
+            address(this),
+            name,
+            organizer,
+            contributionAmount,
+            totalParticipants,
+            currentCycle,
+            totalCycles,
+            fundStarted,
+            totalCollateralStaked,
+            cycleDuration,
+            startTime
+        );
+    }
+
+    /**
      * @notice Allows participants to stake their collateral to start the fund
      */
     function stakeCollateral() external payable onlyParticipant {
@@ -123,8 +173,14 @@ contract ChitFund {
         require(currentCycle <= totalCycles, "All cycles completed");
 
         uint256 cycleDeadline = getDeadlineForCycle(currentCycle);
-        require(block.timestamp <= cycleDeadline, "Contribution period ended for this cycle");
-        require(msg.value == contributionAmount, "Incorrect contribution amount");
+        require(
+            block.timestamp <= cycleDeadline,
+            "Contribution period ended for this cycle"
+        );
+        require(
+            msg.value == contributionAmount,
+            "Incorrect contribution amount"
+        );
 
         uint256 idx = participantIndex[msg.sender];
         Participant storage participant = participants[idx];
@@ -192,20 +248,19 @@ contract ChitFund {
     /**
      * @notice Retrieves participant details
      * @param _addr The participant's address
+     * @return hasStakedCollateral Whether the participant has staked collateral to begin fund
      * @return hasContributed Whether the participant has contributed in the current cycle
      * @return hasReceivedFund Whether the participant has received the fund
      */
-    function getParticipantDetails(address _addr)
-        external
-        view
-        returns (bool hasContributed, bool hasReceivedFund)
-    {
+    function getParticipantDetails(
+        address _addr
+    ) external view returns (bool hasStakedCollateral, bool hasContributed, bool hasReceivedFund) {
         if (!isParticipant(_addr)) {
-            return (false, false);
+            return (false, false, false);
         }
         uint256 idx = participantIndex[_addr];
         Participant storage participant = participants[idx];
-        return (participant.hasContributed, participant.hasReceivedFund);
+        return (participant.hasStakedCollateral, participant.hasContributed, participant.hasReceivedFund);
     }
 
     /**

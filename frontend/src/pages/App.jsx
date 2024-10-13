@@ -4,34 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Menu, X, Wallet, Users, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useReadContract } from "wagmi";
+import { useReadContract, useReadContracts } from "wagmi";
 
 import Header from "@/components/header/Header";
-import { ChitFundFactoryAbi, deployedContract } from "@/lib/Contract";
-
-// const chitFunds = [
-//   {
-//     id: 1,
-//     name: "Community Growth Fund",
-//     members: 50,
-//     totalValue: "500,000",
-//     duration: "12 months",
-//   },
-//   {
-//     id: 2,
-//     name: "Tech Startup Boost",
-//     members: 30,
-//     totalValue: "300,000",
-//     duration: "6 months",
-//   },
-//   {
-//     id: 3,
-//     name: "Education Support Circle",
-//     members: 100,
-//     totalValue: "1,000,000",
-//     duration: "24 months",
-//   },
-// ];
+import {
+  ChitFundAbi,
+  ChitFundFactoryAbi,
+  deployedContract,
+} from "@/lib/Contract";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -43,17 +23,30 @@ export default function App() {
   const navigate = useNavigate();
   const [chitFunds, setchitFunds] = useState([]);
 
-  const { data: chitFundsFetch } = useReadContract({
+  const { data: chitFundsAddresses } = useReadContract({
     abi: ChitFundFactoryAbi,
     address: deployedContract,
-    functionName: "getChitFunds",
+    functionName: "getAllChitFunds",
+  });
+
+  const chitFundReads =
+    chitFundsAddresses?.map((address) => ({
+      abi: ChitFundAbi,
+      address,
+      functionName: "getChitFundDetails",
+    })) || [];
+
+  const { data: chitFundDetails } = useReadContracts({
+    contracts: chitFundReads,
   });
 
   useEffect(() => {
-    if (chitFundsFetch) {
-      setchitFunds(chitFundsFetch || []);
+    if (chitFundDetails) {
+      console.log(chitFundDetails);
+
+      setchitFunds(chitFundDetails);
     }
-  }, [chitFundsFetch]);
+  }, [chitFundDetails]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -75,21 +68,27 @@ export default function App() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-                No Chit Funds Available
-              </h2>
-              <p className="text-gray-600 mb-6">
-                There are currently no chit funds to display. Check back later
-                or create a new one.
-              </p>
-              <Button onClick={() => navigate("/chitfund/create")}>
-                Create New Chit Fund
-              </Button>
+              <Card className="h-full">
+                <CardHeader>
+                  <CardTitle className="text-xl font-semibold text-gray-900">
+                    No Chit Funds Available
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600 mb-6">
+                    There are currently no chit funds to display. Check back
+                    later or create a new one.
+                  </p>
+                  <Button onClick={() => navigate("/chitfund/create")}>
+                    Create New Chit Fund
+                  </Button>
+                </CardContent>
+              </Card>
             </motion.div>
           ) : (
-            chitFunds.map((fund) => (
+            chitFunds.map((fund, index) => (
               <motion.div
-                key={fund.id}
+                key={index}
                 variants={fadeIn}
                 initial="initial"
                 animate="animate"
@@ -97,7 +96,7 @@ export default function App() {
                 <Card className="h-full">
                   <CardHeader>
                     <CardTitle className="text-xl font-semibold text-gray-900">
-                      {fund.name}
+                      {fund.result[1]}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -105,25 +104,25 @@ export default function App() {
                       <div className="flex items-center">
                         <Users className="h-5 w-5 text-primary mr-2" />
                         <span className="text-gray-600">
-                          {fund.members} members
+                          {fund.result[4].toString()} members
                         </span>
                       </div>
                       <div className="flex items-center">
                         <TrendingUp className="h-5 w-5 text-primary mr-2" />
                         <span className="text-gray-600">
-                          ₹{fund.totalValue} total value
+                          ₹{fund.result[3].toString()} total value
                         </span>
                       </div>
                       <div className="flex items-center">
                         <Shield className="h-5 w-5 text-primary mr-2" />
                         <span className="text-gray-600">
-                          {fund.duration} duration
+                          {fund.result[6].toString()} duration
                         </span>
                       </div>
                     </div>
                     <Button
                       className="w-full mt-4"
-                      onClick={() => navigate("/chitfund/123")}
+                      onClick={() => navigate(`/chitfund/${fund.result[0]}`)}
                     >
                       View Details
                     </Button>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -11,7 +11,12 @@ import { Slider } from "@/components/ui/slider";
 import { Plus, Minus, Loader2 } from "lucide-react";
 import Header from "@/components/header/Header";
 import { ChitFundFactoryAbi, deployedContract } from "@/lib/Contract";
-import { useAccount, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import {
+  useAccount,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
+import { waitForTransactionReceipt } from "viem/actions";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -20,12 +25,20 @@ const fadeIn = {
 };
 
 const schema = z.object({
+  name: z
+    .string()
+    .min(1, "Chit Fund name is required")
+    .max(100, "Name must be 100 characters or less"),
   numberOfPeople: z
     .number()
     .min(1, "At least 1 person is required")
     .max(100, "Maximum 100 people allowed"),
   addresses: z
-    .array(z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Must be a valid Ethereum address"))
+    .array(
+      z
+        .string()
+        .regex(/^0x[a-fA-F0-9]{40}$/, "Must be a valid Ethereum address")
+    )
     .min(1, "At least 2 addresses are required"),
   collateralPercentage: z
     .number()
@@ -42,12 +55,7 @@ const schema = z.object({
 function CreateChitFund() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const { data: hash, writeContract } = useWriteContract()
-  const { address } = useAccount()
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({
-      hash,
-  })
+  const { data: hash, isPending, writeContract } = useWriteContract();
 
   const {
     register,
@@ -59,6 +67,7 @@ function CreateChitFund() {
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
+      name: "",
       numberOfPeople: 1,
       addresses: ["", ""],
       collateralPercentage: 10,
@@ -80,23 +89,30 @@ function CreateChitFund() {
     setSubmitSuccess(false);
     try {
       const startTimestamp = Math.floor(data.startDate.getTime() / 1000);
-
       writeContract({
         address: deployedContract,
         abi: ChitFundFactoryAbi,
         functionName: 'createChitFund',
-        args: [data.totalAmount, data.numberOfPeople, data.circulationTime, 2629746, startTimestamp, data.addresses],
+        args: [data.name, data.totalAmount, data.numberOfPeople, data.circulationTime, 2629746, startTimestamp, data.addresses],
       })
-      
-      setSubmitSuccess(true);
-      // Here you would typically send the data to your backend or smart contract
+  
     } catch (error) {
       console.error("Error submitting form:", error);
-    } finally {
       setIsSubmitting(false);
-    }
+    } 
   };
 
+  const { isFetched } = useWaitForTransactionReceipt({
+    hash: hash,
+  });
+
+  useEffect(() => {
+    if (isFetched) {
+      setSubmitSuccess(true);
+      setIsSubmitting(false);
+    }
+  }, [isFetched])
+  
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
@@ -128,6 +144,16 @@ function CreateChitFund() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  <div>
+                    <Label htmlFor="name">Chit Fund Name</Label>
+                    <Input id="name" type="text" {...register("name")} />
+                    {errors.name && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.name.message}
+                      </p>
+                    )}
+                  </div>
+
                   <div>
                     <Label htmlFor="numberOfPeople">Number of People</Label>
                     <Controller
@@ -266,10 +292,10 @@ function CreateChitFund() {
                     <Input
                       id="startDate"
                       type="date"
-                      {...register("startDate", { 
-                        setValueAs: (v) => v ? new Date(v) : undefined 
+                      {...register("startDate", {
+                        setValueAs: (v) => (v ? new Date(v) : undefined),
                       })}
-                      min={new Date().toISOString().split('T')[0]}
+                      min={new Date().toISOString().split("T")[0]}
                     />
                     {errors.startDate && (
                       <p className="text-red-500 text-sm mt-1">

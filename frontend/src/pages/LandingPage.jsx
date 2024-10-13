@@ -47,7 +47,7 @@ export default function BaseTrustLanding() {
         </nav>
       </motion.header>
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-primary text-white">
+        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-primary text-white flex items-center justify-center">
           <motion.div
             className="container px-4 md:px-6"
             initial={{ opacity: 0 }}
@@ -97,7 +97,7 @@ export default function BaseTrustLanding() {
             </div>
           </motion.div>
         </section>
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-white">
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-white flex items-center justify-center">
           <div className="container px-4 md:px-6">
             <motion.h2
               className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-8 text-gray-900"
@@ -152,7 +152,7 @@ export default function BaseTrustLanding() {
             </motion.div>
           </div>
         </section>
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-100">
+        <section className="w-full py-12 md:py-24 lg:py-32 bg-gray-100 flex items-center justify-center">
           <div className="container px-4 md:px-6">
             <motion.h2
               className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl text-center mb-8 text-gray-900"

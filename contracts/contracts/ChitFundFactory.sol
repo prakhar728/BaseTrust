@@ -5,12 +5,12 @@ import "./ChitFund.sol";
 
 contract ChitFundFactory {
     ChitFund[] public chitFunds;
-    mapping(address => address[]) public userChitFunds; // Maps each user to their ChitFunds
 
-    event ChitFundCreated(address chitFundAddress, address organizer);
+    event ChitFundCreated(address chitFundAddress, address organizer, string name);
 
     /**
      * @notice Creates a new ChitFund contract
+     * @param _name The name of the ChitFund
      * @param _contributionAmountInEther The contribution amount per cycle in ETH (e.g., 0.001 for 0.001 ETH)
      * @param _totalParticipants Total number of participants in the chit fund
      * @param _totalCycles Total number of cycles (months or iterations)
@@ -19,6 +19,7 @@ contract ChitFundFactory {
      * @param _participants Array of participant wallet addresses
      */
     function createChitFund(
+        string memory _name,
         uint256 _contributionAmountInEther,
         uint256 _totalParticipants,
         uint256 _totalCycles,
@@ -31,6 +32,7 @@ contract ChitFundFactory {
         // Deploy a new ChitFund contract
         ChitFund newChitFund = new ChitFund(
             msg.sender,
+            _name, // Pass the name
             _contributionAmountInEther,
             _totalParticipants,
             _totalCycles,
@@ -41,12 +43,7 @@ contract ChitFundFactory {
 
         chitFunds.push(newChitFund);
 
-        // Record this chit fund for each participant
-        for (uint256 i = 0; i < _participants.length; i++) {
-            userChitFunds[_participants[i]].push(address(newChitFund));
-        }
-
-        emit ChitFundCreated(address(newChitFund), msg.sender);
+        emit ChitFundCreated(address(newChitFund), msg.sender, _name);
     }
 
     /**
@@ -55,14 +52,5 @@ contract ChitFundFactory {
      */
     function getAllChitFunds() public view returns (ChitFund[] memory) {
         return chitFunds;
-    }
-
-    /**
-     * @notice Retrieves all ChitFund contracts for a specific user (participant)
-     * @param user The address of the user to fetch ChitFunds for
-     * @return An array of ChitFund contract addresses the user is involved in
-     */
-    function getChitFundsForUser(address user) public view returns (address[] memory) {
-        return userChitFunds[user];
     }
 }
