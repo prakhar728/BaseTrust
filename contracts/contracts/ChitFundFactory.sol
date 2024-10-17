@@ -22,6 +22,7 @@ contract ChitFundFactory {
      * @param _cycleDuration Duration of each cycle in seconds
      * @param _startTime The UNIX timestamp when the first cycle starts
      * @param _participants Array of participant wallet addresses
+     * @param _collateralPercentage The percentage of collateral (e.g., 10 for 10%)
      */
     function createChitFund(
         string memory _name,
@@ -30,11 +31,17 @@ contract ChitFundFactory {
         uint256 _totalCycles,
         uint256 _cycleDuration,
         uint256 _startTime,
-        address[] memory _participants
+        address[] memory _participants,
+        uint256 _collateralPercentage
     ) public {
         require(
             _participants.length == _totalParticipants,
             "Participants count mismatch"
+        );
+
+        require(
+            _collateralPercentage > 0 && _collateralPercentage <= 100,
+            "Collateral percentage should be between 1 and 100"
         );
 
         // Deploy a new ChitFund contract
@@ -46,7 +53,8 @@ contract ChitFundFactory {
             _totalCycles,
             _cycleDuration,
             _startTime,
-            _participants
+            _participants,
+            _collateralPercentage // Pass the collateral percentage to ChitFund contract
         );
 
         chitFunds.push(newChitFund);

@@ -80,11 +80,11 @@ export default function ChitFundPage() {
   const handlePoolIn = async () => {
     setIsLoading(true);
     try {
-      await writeContract({
+      writeContract({
         address: fundid,
         abi: ChitFundAbi,
         functionName: "contribute",
-        value: parseEther(chitFundData[3].toString()),
+        value: chitFundData[3].toString(),
       });
     } catch (error) {
       console.error("Error pooling in:", error);
@@ -95,14 +95,13 @@ export default function ChitFundPage() {
 
   const handleStakeCollateral = async () => {
     setIsLoading(true);
+
     try {
       writeContract({
         address: fundid,
         abi: ChitFundAbi,
         functionName: "stakeCollateral",
-        value: parseEther(
-          ((chitFundData[3] * chitFundData[5]) / 100).toString()
-        ),
+        value: chitFundData[11].toString(),
       });
     } catch (error) {
       console.error("Error staking collateral:", error);
@@ -114,7 +113,7 @@ export default function ChitFundPage() {
   const handleClaimFund = async () => {
     setIsLoading(true);
     try {
-      await writeContract({
+      writeContract({
         address: fundid,
         abi: ChitFundAbi,
         functionName: "claimFund",
@@ -165,7 +164,9 @@ export default function ChitFundPage() {
       const nextDeadlineTime = new Date(
         startTime + cycleDuration * parseInt(5)
       );
-      setNextDeadline(nextDeadlineTime.toLocaleDateString());
+      setNextDeadline(
+        `${nextDeadlineTime.toLocaleDateString()} ${nextDeadlineTime.toLocaleTimeString()}`
+      );
 
       return () => clearInterval(interval);
     }
@@ -176,7 +177,7 @@ export default function ChitFundPage() {
 
     console.log(userDetail);
 
-    if (!userDetail[2]) {
+    if (!userDetail[0]) {
       return (
         <Button
           onClick={handleStakeCollateral}

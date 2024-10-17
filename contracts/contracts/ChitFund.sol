@@ -10,7 +10,8 @@ contract ChitFund {
     uint256 public totalCycles;
     uint256 public cycleDuration; // Duration in seconds
     uint256 public startTime; // Start timestamp (UNIX format)
-    uint256 public collateralAmount; // 10% of contributionAmount
+    uint256 public collateralPercentage; // Collateral percentage set by the creator
+    uint256 public collateralAmount; // Calculated based on the contribution amount and collateral percentage
     bool public fundStarted;
 
     struct Participant {
@@ -59,6 +60,7 @@ contract ChitFund {
      * @param _cycleDuration Duration of each cycle in seconds
      * @param _startTime The UNIX timestamp when the first cycle starts
      * @param _participants Array of participant addresses
+     * @param _collateralPercentage The percentage of collateral (e.g., 10 for 10%)
      */
     constructor(
         address _organizer,
@@ -68,11 +70,16 @@ contract ChitFund {
         uint256 _totalCycles,
         uint256 _cycleDuration, // Cycle duration in seconds
         uint256 _startTime,
-        address[] memory _participants
+        address[] memory _participants,
+        uint256 _collateralPercentage
     ) {
         require(
             _participants.length == _totalParticipants,
             "Participants count mismatch"
+        );
+        require(
+            _collateralPercentage > 0 && _collateralPercentage <= 100,
+            "Collateral percentage should be between 1 and 100"
         );
 
         organizer = _organizer;
@@ -82,7 +89,8 @@ contract ChitFund {
         totalCycles = _totalCycles;
         cycleDuration = _cycleDuration; // Duration of each cycle in seconds
         startTime = _startTime; // The timestamp when the first cycle starts
-        collateralAmount = contributionAmount / 10; // 10% of contribution amount as collateral
+        collateralPercentage = _collateralPercentage; // Set the collateral percentage
+        collateralAmount = (contributionAmount * collateralPercentage) / 100; // Calculate collateral based on the percentage
         currentCycle = 1;
 
         // Initialize participants
@@ -100,16 +108,6 @@ contract ChitFund {
     }
 
     /**
-     * @notice Calculates the deadline for the current cycle based on the start time and cycle duration.
-     * @param cycle The cycle number to calculate the deadline for.
-     * @return The UNIX timestamp for the deadline of the specified cycle.
-     */
-    function getDeadlineForCycle(uint256 cycle) public view returns (uint256) {
-        require(cycle <= totalCycles, "Cycle out of bounds");
-        return startTime + (cycle - 1) * cycleDuration; // Add cycleDuration in seconds for each cycle
-    }
-
-    /**
      * @notice Retrieves public details about the ChitFund
      * @return _fundAddress Address of the Fund
      * @return _name The name of the ChitFund
@@ -122,6 +120,7 @@ contract ChitFund {
      * @return _totalCollateralStaked Total collateral staked by participants
      * @return _cycleDuration Duration of each cycle in seconds
      * @return _startTime The start timestamp of the ChitFund
+     * @return _collateralAmount The amount of collateral required from each participant
      */
     function getChitFundDetails()
         external
@@ -137,7 +136,8 @@ contract ChitFund {
             bool _fundStarted,
             uint256 _totalCollateralStaked,
             uint256 _cycleDuration,
-            uint256 _startTime
+            uint256 _startTime,
+            uint256 _collateralAmount // The collateral required from each participant
         )
     {
         return (
@@ -151,7 +151,8 @@ contract ChitFund {
             fundStarted,
             totalCollateralStaked,
             cycleDuration,
-            startTime
+            startTime,
+            collateralAmount // Return the collateralAmount at the end
         );
     }
 
@@ -251,11 +252,23 @@ contract ChitFund {
     }
 
     /**
-     * @notice Checks if all cycles are completed
-     * @return True if all cycles are completed, false otherwise
+     * @notice Calculates the deadline for the current cycle based on the start time and cycle duration.
+     * @param cycle The cycle number to calculate the deadline for.
+     * @return The UNIX timestamp for the deadline of the specified cycle.
      */
-    function isFundCompleted() external view returns (bool) {
-        return currentCycle > totalCycles;
+    function getDeadlineForCycle(uint256 cycle) public view returns (uint256) {
+        require(cycle <= totalCycles, "Cycle out of bounds");
+        return startTime + (cycle - 1) * cycleDuration; // Add cycleDuration in seconds for each cycle
+    }
+
+    /**
+     * @notice Checks if an address is a participant
+     * @param _addr The address to check
+     * @return True if the address is a participant, false otherwise
+     */
+    function isParticipant(address _addr) public view returns (bool) {
+        uint256 idx = participantIndex[_addr];
+        return participants.length > idx && participants[idx].addr == _addr;
     }
 
     /**
@@ -286,16 +299,6 @@ contract ChitFund {
             participant.hasContributed,
             participant.hasReceivedFund
         );
-    }
-
-    /**
-     * @notice Checks if an address is a participant
-     * @param _addr The address to check
-     * @return True if the address is a participant, false otherwise
-     */
-    function isParticipant(address _addr) public view returns (bool) {
-        uint256 idx = participantIndex[_addr];
-        return participants.length > idx && participants[idx].addr == _addr;
     }
 
     /**

@@ -51,6 +51,11 @@ const schema = z.object({
     .number()
     .min(1, "Minimum 1 month")
     .max(60, "Maximum 60 months"),
+  cycleDuration: z
+    .number()
+    .min(1, "Minimum 1 minute")
+    .max(43200, "Maximum 30 days"),
+  cycleDurationType: z.enum(["minutes", "days"]),
   startDate: z.date().min(new Date(), "Start date must be in the future"),
 });
 
@@ -76,6 +81,8 @@ function CreateChitFund() {
       collateralPercentage: 10,
       totalAmount: 1000,
       circulationTime: 12,
+      cycleDuration: 30,
+      cycleDurationType: "days",
       startDate: new Date(Date.now() + 86400000), // Default to tomorrow
     },
   });
@@ -86,13 +93,21 @@ function CreateChitFund() {
   });
 
   const numberOfPeople = watch("numberOfPeople");
+  const cycleDurationType = watch("cycleDurationType");
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     setSubmitSuccess(false);
     try {
       const startTimestamp = Math.floor(data.startDate.getTime() / 1000);
+      let cycleDurationInSeconds;
+      if (data.cycleDurationType === "minutes") {
+        cycleDurationInSeconds = data.cycleDuration * 60; // Convert minutes to seconds
+      } else {
+        cycleDurationInSeconds = data.cycleDuration * 86400; // Convert days to seconds
+      }
       
+    
       writeContract({
         address: deployedContract,
         abi: ChitFundFactoryAbi,
@@ -102,9 +117,10 @@ function CreateChitFund() {
           parseEther((data.totalAmount / ethereumPrice).toString()),
           data.numberOfPeople,
           data.circulationTime,
-          2629746,
+          cycleDurationInSeconds,
           startTimestamp,
           data.addresses,
+          data.collateralPercentage
         ],
       });
     } catch (error) {
@@ -302,6 +318,32 @@ function CreateChitFund() {
                     {errors.circulationTime && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.circulationTime.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="cycleDuration">
+                      Cycle Duration
+                    </Label>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id="cycleDuration"
+                        type="number"
+                        {...register("cycleDuration", { valueAsNumber: true })}
+                        className="flex-grow"
+                      />
+                      <select
+                        {...register("cycleDurationType")}
+                        className="border border-gray-300 rounded-md p-2"
+                      >
+                        <option value="minutes">Minutes</option>
+                        <option value="days">Days</option>
+                      </select>
+                    </div>
+                    {errors.cycleDuration && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.cycleDuration.message}
                       </p>
                     )}
                   </div>
