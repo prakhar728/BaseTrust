@@ -17,6 +17,8 @@ import {
   useWriteContract,
 } from "wagmi";
 import { waitForTransactionReceipt } from "viem/actions";
+import { fetchEthereumPrice } from "@/lib/EthereumPrices";
+import { parseEther } from "viem";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -55,6 +57,7 @@ const schema = z.object({
 function CreateChitFund() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [ethereumPrice, setethereumPrice] = useState(0);
   const { data: hash, isPending, writeContract } = useWriteContract();
 
   const {
@@ -89,17 +92,25 @@ function CreateChitFund() {
     setSubmitSuccess(false);
     try {
       const startTimestamp = Math.floor(data.startDate.getTime() / 1000);
+      
       writeContract({
         address: deployedContract,
         abi: ChitFundFactoryAbi,
-        functionName: 'createChitFund',
-        args: [data.name, data.totalAmount, data.numberOfPeople, data.circulationTime, 2629746, startTimestamp, data.addresses],
-      })
-  
+        functionName: "createChitFund",
+        args: [
+          data.name,
+          parseEther((data.totalAmount / ethereumPrice).toString()),
+          data.numberOfPeople,
+          data.circulationTime,
+          2629746,
+          startTimestamp,
+          data.addresses,
+        ],
+      });
     } catch (error) {
       console.error("Error submitting form:", error);
       setIsSubmitting(false);
-    } 
+    }
   };
 
   const { isFetched } = useWaitForTransactionReceipt({
@@ -111,8 +122,16 @@ function CreateChitFund() {
       setSubmitSuccess(true);
       setIsSubmitting(false);
     }
-  }, [isFetched])
-  
+  }, [isFetched]);
+
+  const populateEthereumPrice = async () => {
+    setethereumPrice(await fetchEthereumPrice());
+  };
+
+  useEffect(() => {
+    populateEthereumPrice();
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />

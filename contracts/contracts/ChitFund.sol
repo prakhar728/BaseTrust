@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 contract ChitFund {
     address public organizer;
     string public name; // Name of the ChitFund
-    uint256 public contributionAmount; // Stored in Wei
+    uint256 public contributionAmount; // Contribution amount stored in Wei
     uint256 public totalParticipants;
     uint256 public currentCycle;
     uint256 public totalCycles;
-    uint256 public cycleDuration; // Duration in months (or seconds if you prefer using seconds)
+    uint256 public cycleDuration; // Duration in seconds
     uint256 public startTime; // Start timestamp (UNIX format)
     uint256 public collateralAmount; // 10% of contributionAmount
     bool public fundStarted;
@@ -53,20 +53,20 @@ contract ChitFund {
      * @notice Initializes a new ChitFund contract
      * @param _organizer The address of the organizer
      * @param _name The name of the ChitFund
-     * @param _contributionAmountInEther Contribution amount per cycle in ETH (e.g., 0.001 for 0.001 ETH)
+     * @param _contributionAmount Contribution amount per cycle in Wei
      * @param _totalParticipants Total number of participants
-     * @param _totalCycles Total number of cycles (months or iterations)
-     * @param _cycleDuration Duration of each cycle in seconds (if using seconds instead of months)
+     * @param _totalCycles Total number of cycles (iterations)
+     * @param _cycleDuration Duration of each cycle in seconds
      * @param _startTime The UNIX timestamp when the first cycle starts
      * @param _participants Array of participant addresses
      */
     constructor(
         address _organizer,
         string memory _name,
-        uint256 _contributionAmountInEther,
+        uint256 _contributionAmount,
         uint256 _totalParticipants,
         uint256 _totalCycles,
-        uint256 _cycleDuration, // Cycle duration in seconds or months (e.g., 30 days = 2592000 seconds)
+        uint256 _cycleDuration, // Cycle duration in seconds
         uint256 _startTime,
         address[] memory _participants
     ) {
@@ -77,10 +77,10 @@ contract ChitFund {
 
         organizer = _organizer;
         name = _name; // Set the name of the ChitFund
-        contributionAmount = _contributionAmountInEther * 1 ether; // Convert ETH to Wei
+        contributionAmount = _contributionAmount; // Expecting Wei directly
         totalParticipants = _totalParticipants;
         totalCycles = _totalCycles;
-        cycleDuration = _cycleDuration; // Duration of each cycle (in months or seconds)
+        cycleDuration = _cycleDuration; // Duration of each cycle in seconds
         startTime = _startTime; // The timestamp when the first cycle starts
         collateralAmount = contributionAmount / 10; // 10% of contribution amount as collateral
         currentCycle = 1;

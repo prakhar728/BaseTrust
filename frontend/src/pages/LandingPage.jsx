@@ -41,8 +41,8 @@ export default function BaseTrustLanding() {
           </span>
         </a>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          <a className="text-sm font-medium hover:text-primary" href="#">
-            Connect
+          <a className="text-sm font-medium hover:text-primary" href="https://x.com/prakharOjha4/">
+            Contact
           </a>
         </nav>
       </motion.header>

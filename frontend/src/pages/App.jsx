@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield, Menu, X, Wallet, Users, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useReadContract, useReadContracts } from "wagmi";
+import { useAccount, useReadContract, useReadContracts } from "wagmi";
 
 import Header from "@/components/header/Header";
 import {
@@ -12,6 +12,8 @@ import {
   ChitFundFactoryAbi,
   deployedContract,
 } from "@/lib/Contract";
+import { fetchEthereumPrice } from "@/lib/EthereumPrices";
+import { formatEther } from "viem";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -22,11 +24,24 @@ const fadeIn = {
 export default function App() {
   const navigate = useNavigate();
   const [chitFunds, setchitFunds] = useState([]);
+  const [ethereumPrice, setethereumPrice] = useState(0);
+  const { address } = useAccount();
 
+  const populateEthereumPrice = async () => {
+    setethereumPrice(await fetchEthereumPrice());
+  };
+
+  useEffect(() => {
+    populateEthereumPrice();
+  }, []);
+
+  
   const { data: chitFundsAddresses } = useReadContract({
     abi: ChitFundFactoryAbi,
     address: deployedContract,
-    functionName: "getAllChitFunds",
+    functionName: "getChitFundsForUser",
+    args: [address ?? "0x0"], // Add null check for address
+    enabled: !!address, // Only run query when address is available
   });
 
   const chitFundReads =
@@ -40,6 +55,11 @@ export default function App() {
     contracts: chitFundReads,
   });
 
+  useEffect(() => {
+    console.log(chitFundsAddresses);
+    
+  }, [chitFundsAddresses])
+  
   useEffect(() => {
     if (chitFundDetails) {
       console.log(chitFundDetails);
@@ -110,7 +130,8 @@ export default function App() {
                       <div className="flex items-center">
                         <TrendingUp className="h-5 w-5 text-primary mr-2" />
                         <span className="text-gray-600">
-                          ₹{fund.result[3].toString()} total value
+                          ₹{formatEther(fund.result[3]) * ethereumPrice} total
+                          value
                         </span>
                       </div>
                       <div className="flex items-center">

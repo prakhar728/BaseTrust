@@ -25,6 +25,8 @@ import { useParams } from "react-router-dom";
 import { ChitFundAbi } from "@/lib/Contract";
 import { useAccount, useReadContract, useReadContracts } from "wagmi";
 import Header from "@/components/header/Header";
+import { formatEther } from "viem";
+import { fetchEthereumPrice } from "@/lib/EthereumPrices";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -36,6 +38,7 @@ export default function ChitFundPage() {
   const [activeTab, setActiveTab] = useState("details");
   const [userStatus, setUserStatus] = useState("Upcoming"); // This would be determined by the user's actual status
   const [isLoadingg, setIsLoading] = useState(false);
+  const [ethereumPrice, setethereumPrice] = useState(0);
   const { fundid } = useParams(); // Get the id from the URL
   const { address } = useAccount();
 
@@ -52,8 +55,6 @@ export default function ChitFundPage() {
     args: [address],
   });
 
-  console.log(userDetail);
-  
   const totalParticipants = parseInt(chitFundData ? chitFundData[4] : 0);
 
   const participantReads = new Array(totalParticipants)
@@ -77,6 +78,14 @@ export default function ChitFundPage() {
       setIsLoading(false);
     }, 2000);
   };
+
+  const populateEthereumPrice = async () => {
+    setethereumPrice(await fetchEthereumPrice());
+  };
+
+  useEffect(() => {
+    populateEthereumPrice();
+  }, []);
 
   const renderActionButton = () => {
     switch (userStatus) {
@@ -175,7 +184,7 @@ export default function ChitFundPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="text-2xl font-bold">
-                  ₹{chitFundData[3].toString()}
+                  ₹{formatEther(chitFundData[3]) * ethereumPrice} total
                 </CardContent>
               </Card>
               <Card>
@@ -369,6 +378,5 @@ export default function ChitFundPage() {
     </div>
   );
 }
-
 
 /// I need to setup a few details, make the collateral thing working, allow everyone to pool in, allow the person to claim the amount, and start the indexer
