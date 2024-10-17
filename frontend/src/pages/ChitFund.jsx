@@ -55,6 +55,12 @@ export default function ChitFundPage() {
     functionName: "getChitFundDetails",
   });
 
+  const { data: contributionAmount } = useReadContract({
+    abi: ChitFundAbi,
+    address: fundid,
+    functionName: "getContributionAmount",
+  });
+
   const { data: userDetail, isLoading: isUserDetailLoading } = useReadContract({
     abi: ChitFundAbi,
     address: fundid,
@@ -84,7 +90,7 @@ export default function ChitFundPage() {
         address: fundid,
         abi: ChitFundAbi,
         functionName: "contribute",
-        value: chitFundData[3].toString(),
+        value: contributionAmount.toString(),
       });
     } catch (error) {
       console.error("Error pooling in:", error);

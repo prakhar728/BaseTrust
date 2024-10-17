@@ -180,11 +180,14 @@ contract ChitFund {
     }
 
     /**
-     * @notice Allows participants to contribute for the current cycle
+     * @notice Allows participants to contribute their share for the current cycle
      */
     function contribute() external payable onlyParticipant {
         require(fundStarted, "Fund has not started yet");
         require(currentCycle <= totalCycles, "All cycles completed");
+
+        // Calculate the contribution each participant needs to make
+        uint256 participantContribution = contributionAmount / totalParticipants;
 
         uint256 cycleDeadline = getDeadlineForCycle(currentCycle);
         require(
@@ -192,7 +195,7 @@ contract ChitFund {
             "Contribution period ended for this cycle"
         );
         require(
-            msg.value == contributionAmount,
+            msg.value == participantContribution,
             "Incorrect contribution amount"
         );
 
@@ -238,7 +241,7 @@ contract ChitFund {
             }
         }
 
-        uint256 fundAmount = contributionAmount * totalParticipants;
+        uint256 fundAmount = contributionAmount;
         recipient.transfer(fundAmount);
 
         emit FundDisbursed(recipient, fundAmount, currentCycle);
@@ -319,7 +322,7 @@ contract ChitFund {
      * @return The contribution amount in Wei
      */
     function getContributionAmount() public view returns (uint256) {
-        return contributionAmount;
+        return contributionAmount / totalParticipants;
     }
 
     /**
