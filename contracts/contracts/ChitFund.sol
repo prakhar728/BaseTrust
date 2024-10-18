@@ -13,6 +13,8 @@ contract ChitFund {
     uint256 public collateralPercentage; // Collateral percentage set by the creator
     uint256 public collateralAmount; // Calculated based on the contribution amount and collateral percentage
     bool public fundStarted;
+    // Add ReentrancyGuard
+    bool private locked;
 
     struct Participant {
         address payable addr;
@@ -49,6 +51,13 @@ contract ChitFund {
         _;
     }
 
+    modifier nonReentrant() {
+        require(!locked, "ReentrancyGuard: reentrant call");
+        locked = true;
+        _;
+        locked = false;
+    }
+
     event ContributionReceived(
         address participant,
         uint256 amount,
@@ -58,6 +67,9 @@ contract ChitFund {
     event CollateralStaked(address participant, uint256 amount);
     event FundStarted();
     event FundClaimed(address recipient, uint256 cycle);
+    event CycleCompleted(uint256 cycle);
+    event CollateralReturned(address participant, uint256 amount);
+    event TransferFailed(address recipient, uint256 amount);
 
     /**
      * @notice Initializes a new ChitFund contract
@@ -234,34 +246,83 @@ contract ChitFund {
     /**
      * @notice Disburses the pooled funds to the next eligible participant
      */
-    function _disburseFunds() internal {
+    function _disburseFunds() internal nonReentrant {
         require(
             _allContributionsReceived(),
             "All contributions not received yet"
         );
+
         address payable recipient;
+        uint256 recipientIndex;
 
         // Select the next participant who hasn't received the fund yet
         for (uint256 i = 0; i < participants.length; i++) {
             Participant storage participant = participants[i];
             if (!participant.hasReceivedFund) {
                 recipient = participant.addr;
-                participant.hasReceivedFund = true;
+                recipientIndex = i;
                 break;
             }
         }
 
         uint256 fundAmount = contributionAmount;
-        recipient.transfer(fundAmount);
 
-        emit FundDisbursed(recipient, fundAmount, currentCycle);
+        // Use call instead of transfer
+        (bool success, ) = recipient.call{value: fundAmount}("");
 
-        // Reset contributions for next cycle
-        for (uint256 i = 0; i < participants.length; i++) {
-            participants[i].hasContributed = false;
+        // Only update state if transfer was successful
+        if (success) {
+            participants[recipientIndex].hasReceivedFund = true;
+            emit FundDisbursed(recipient, fundAmount, currentCycle);
+
+            // Reset contributions for next cycle
+            for (uint256 i = 0; i < participants.length; i++) {
+                participants[i].hasContributed = false;
+            }
+
+            currentCycle++;
+            emit CycleCompleted(currentCycle - 1);
+        } else {
+            emit TransferFailed(recipient, fundAmount);
+            revert("Fund transfer failed");
         }
+    }
 
-        currentCycle++;
+    /**
+     * @notice Returns collateral to a participant after fund completion
+     * @param _participant The address of the participant
+     */
+    function returnCollateral(
+        address payable _participant
+    ) external onlyOrganizer nonReentrant {
+        require(currentCycle > totalCycles, "Fund not completed yet");
+        uint256 idx = participantIndex[_participant];
+        require(idx < participants.length, "Not a participant");
+
+        Participant storage participant = participants[idx];
+        require(participant.hasStakedCollateral, "No collateral to return");
+
+        participant.hasStakedCollateral = false;
+        totalCollateralStaked -= collateralAmount;
+
+        (bool success, ) = _participant.call{value: collateralAmount}("");
+        require(success, "Collateral return failed");
+
+        emit CollateralReturned(_participant, collateralAmount);
+    }
+
+    /**
+     * @notice Returns total balance of the contract
+     */
+    function getContractBalance() public view returns (uint256) {
+        return address(this).balance;
+    }
+
+    /**
+     * @notice Checks if the fund is completed
+     */
+    function isFundCompleted() public view returns (bool) {
+        return currentCycle > totalCycles;
     }
 
     /**

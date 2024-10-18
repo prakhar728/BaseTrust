@@ -1,7 +1,7 @@
 import ChitFundFactory from "../assets/contracts/ChitFundFactory.json";
 import ChitFund from "../assets/contracts/ChitFund.json";
 
-export const deployedContract = '0x689b7Fa04aDE7EEf574E80ce3B9a113106341BA1';
+export const deployedContract = '0x612f38e9C27Ef78A80b3ABa3198374f65918BA19';
 
 // Correct way to export the ABI
 export const ChitFundFactoryAbi = ChitFundFactory.abi;
