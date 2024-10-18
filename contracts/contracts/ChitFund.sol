@@ -41,6 +41,14 @@ contract ChitFund {
         _;
     }
 
+    modifier onlyRecipient() {
+        require(
+            getNextRecipient() == msg.sender,
+            "Only the eligible recipient can claim the funds"
+        );
+        _;
+    }
+
     event ContributionReceived(
         address participant,
         uint256 amount,
@@ -49,6 +57,7 @@ contract ChitFund {
     event FundDisbursed(address recipient, uint256 amount, uint256 cycle);
     event CollateralStaked(address participant, uint256 amount);
     event FundStarted();
+    event FundClaimed(address recipient, uint256 cycle);
 
     /**
      * @notice Initializes a new ChitFund contract
@@ -187,7 +196,8 @@ contract ChitFund {
         require(currentCycle <= totalCycles, "All cycles completed");
 
         // Calculate the contribution each participant needs to make
-        uint256 participantContribution = contributionAmount / totalParticipants;
+        uint256 participantContribution = contributionAmount /
+            totalParticipants;
 
         uint256 cycleDeadline = getDeadlineForCycle(currentCycle);
         require(
@@ -199,17 +209,13 @@ contract ChitFund {
             "Incorrect contribution amount"
         );
 
-        uint256 idx = participantIndex[msg.sender];
-        Participant storage participant = participants[idx];
+        uint256 idx = participantIndex[msg.sender]; // Fetch the index of the participant
+        Participant storage participant = participants[idx]; // Get participant details
         require(!participant.hasContributed, "Already contributed this cycle");
 
-        participant.hasContributed = true;
+        participant.hasContributed = true; // Correctly update the hasContributed flag
 
         emit ContributionReceived(msg.sender, msg.value, currentCycle);
-
-        if (_allContributionsReceived()) {
-            _disburseFunds();
-        }
     }
 
     /**
@@ -229,6 +235,10 @@ contract ChitFund {
      * @notice Disburses the pooled funds to the next eligible participant
      */
     function _disburseFunds() internal {
+        require(
+            _allContributionsReceived(),
+            "All contributions not received yet"
+        );
         address payable recipient;
 
         // Select the next participant who hasn't received the fund yet
@@ -315,6 +325,19 @@ contract ChitFund {
             }
         }
         revert("All participants have received the fund for this cycle.");
+    }
+
+    /**
+     * @notice Allows the current recipient to claim the fund for the cycle
+     */
+    function claim() external onlyRecipient {
+        require(fundStarted, "Fund has not started yet");
+        require(_allContributionsReceived(), "Not all contributions received");
+
+        // Disburse the funds to the current recipient
+        _disburseFunds();
+
+        emit FundClaimed(msg.sender, currentCycle);
     }
 
     /**

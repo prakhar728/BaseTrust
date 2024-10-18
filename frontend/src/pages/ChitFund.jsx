@@ -85,6 +85,8 @@ export default function ChitFundPage() {
 
   const handlePoolIn = async () => {
     setIsLoading(true);
+    console.log(contributionAmount.toString());
+    
     try {
       writeContract({
         address: fundid,
@@ -122,7 +124,7 @@ export default function ChitFundPage() {
       writeContract({
         address: fundid,
         abi: ChitFundAbi,
-        functionName: "claimFund",
+        functionName: "claim",
       });
     } catch (error) {
       console.error("Error claiming fund:", error);
