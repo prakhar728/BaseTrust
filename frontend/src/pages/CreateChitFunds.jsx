@@ -308,7 +308,7 @@ function CreateChitFund() {
 
                   <div>
                     <Label htmlFor="circulationTime">
-                      Time for Circulation (months)
+                      Number of cycles
                     </Label>
                     <Input
                       id="circulationTime"

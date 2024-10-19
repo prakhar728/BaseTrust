@@ -147,7 +147,7 @@ export default function ChitFundPage() {
 
       const endTime =
         (parseInt(chitFundData[10]) +
-          parseInt(chitFundData[6]) * parseInt(chitFundData[9])) *
+          (parseInt(chitFundData[6]) * parseInt(chitFundData[9]))) *
         1000;
       const updateCountdown = () => {
         const now = new Date().getTime();

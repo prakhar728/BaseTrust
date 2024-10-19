@@ -207,7 +207,6 @@ contract ChitFund {
         require(fundStarted, "Fund has not started yet");
         require(currentCycle <= totalCycles, "All cycles completed");
 
-        // Calculate the contribution each participant needs to make
         uint256 participantContribution = contributionAmount /
             totalParticipants;
 
