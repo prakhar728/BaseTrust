@@ -202,7 +202,7 @@ contract ChitFund {
      * @notice Returns collateral to all participants after fund completion. Can only be called once.
      */
     function returnAllCollateral() external nonReentrant {
-        require(currentCycle > totalCycles, "Fund not completed yet");
+        require(currentCycle == totalCycles, "Fund not completed yet");
         require(totalCollateralStaked > 0, "Collateral already returned");
 
         // Iterate over all participants and return their collateral
@@ -221,6 +221,7 @@ contract ChitFund {
                 require(success, "Collateral return failed");
             }
         }
+        totalCollateralStaked = 0;
 
         // Ensure that collateral cannot be returned again
         require(totalCollateralStaked == 0, "Collateral return incomplete");
@@ -364,19 +365,12 @@ contract ChitFund {
      * @notice Returns the next eligible participant who hasn't received the fund in the current cycle
      */
     function getNextRecipient() public {
-        bool recipientFound = false;
         for (uint256 i = 0; i < totalParticipants; i++) {
             // Check if the participant has not received the fund
             if (participants[i].hasReceivedFund == false) {
                 nextRecipient = participants[i].addr;
-                recipientFound = true;
                 break; // Exit the loop once the next recipient is found
             }
-        }
-
-        // If no recipient is found after iterating, revert the transaction
-        if (recipientFound == false && currentCycle > totalCycles) {
-            revert("All participants have received the fund!");
         }
     }
 

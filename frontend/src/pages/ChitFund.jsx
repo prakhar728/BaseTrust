@@ -202,7 +202,7 @@ export default function ChitFundPage() {
   const renderActionButton = () => {
     if (!userDetail) return null;
 
-    if (chitFundData[5] > chitFundData[6]) {
+    if (chitFundData[5] == chitFundData[6]) {
       return (
         <Button
           onClick={handleGetCollateral}
