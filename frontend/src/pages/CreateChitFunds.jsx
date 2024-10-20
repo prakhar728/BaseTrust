@@ -63,7 +63,7 @@ function CreateChitFund() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [ethereumPrice, setethereumPrice] = useState(0);
-  const { data: hash, isPending, writeContract } = useWriteContract();
+  const { data: hash, isPending, writeContract, error: ContractError } = useWriteContract();
 
   const {
     register,
@@ -86,6 +86,7 @@ function CreateChitFund() {
       startDate: new Date(Date.now() + 86400000), // Default to tomorrow
     },
   });
+  console.log(ContractError);
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -107,7 +108,16 @@ function CreateChitFund() {
         cycleDurationInSeconds = data.cycleDuration * 86400; // Convert days to seconds
       }
       
-    
+      
+      console.log(  data.name,
+        parseInt(parseEther((data.totalAmount / ethereumPrice).toString())),
+        data.numberOfPeople,
+        data.circulationTime,
+        cycleDurationInSeconds,
+        startTimestamp,
+        data.addresses,
+        data.collateralPercentage);
+      
       writeContract({
         address: deployedContract,
         abi: ChitFundFactoryAbi,
@@ -141,12 +151,19 @@ function CreateChitFund() {
   }, [isFetched]);
 
   const populateEthereumPrice = async () => {
-    setethereumPrice(await fetchEthereumPrice());
+    if (!ethereumPrice)
+      setethereumPrice(await fetchEthereumPrice());
   };
 
   useEffect(() => {
     populateEthereumPrice();
   }, []);
+
+  useEffect(() => {
+    if (ContractError)
+      setIsSubmitting(false);
+  }, [ContractError])
+  
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">

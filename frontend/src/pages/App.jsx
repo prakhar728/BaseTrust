@@ -36,7 +36,7 @@ export default function App() {
   }, []);
 
   
-  const { data: chitFundsAddresses } = useReadContract({
+  const { data: chitFundsAddresses, error: ContractError } = useReadContract({
     abi: ChitFundFactoryAbi,
     address: deployedContract,
     functionName: "getChitFundsForUser",
@@ -44,6 +44,8 @@ export default function App() {
     enabled: !!address, // Only run query when address is available
   });
 
+  console.log(ContractError);
+  
   const chitFundReads =
     chitFundsAddresses?.map((address) => ({
       abi: ChitFundAbi,

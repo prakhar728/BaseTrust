@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronRight, Shield, Zap, TrendingUp, Users } from "lucide-react";
+import { ChevronRight, Zap, TrendingUp, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
@@ -22,9 +22,8 @@ export default function BaseTrustLanding() {
   const navigate = useNavigate();
 
   const handleGetStarted = () => {
-    navigate('app'); // Navigate to /app when "Get Started" is clicked
+    navigate("app"); // Navigate to /app when "Get Started" is clicked
   };
-
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
@@ -34,14 +33,18 @@ export default function BaseTrustLanding() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <a className="flex items-center justify-center" href="#">
-          <Shield className="h-6 w-6 text-primary" />
-          <span className="ml-2 text-2xl font-bold text-primary">
-            BaseTrust
-          </span>
+        <a className="flex items-center justify-center" href="/">
+          <img
+            src="/BaseTrustLogo.png"
+            alt="BaseTrust Logo"
+            className="h-14"
+          />
         </a>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          <a className="text-sm font-medium hover:text-primary" href="https://x.com/prakharOjha4/">
+          <a
+            className="text-sm font-medium hover:text-primary"
+            href="https://x.com/prakharOjha4/"
+          >
             Contact
           </a>
         </nav>
@@ -123,7 +126,7 @@ export default function BaseTrustLanding() {
                     "Transform traditional chit funds into secure and transparent blockchain-based communities.",
                 },
                 {
-                  icon: Shield,
+                  icon: Users,
                   title: "Enhanced Security",
                   description:
                     "Leverage Base L2 solution for unparalleled security and transparency in all transactions.",
@@ -172,7 +175,7 @@ export default function BaseTrustLanding() {
             >
               {[
                 {
-                  icon: Shield,
+                  icon: Users,
                   title: "Trust and Transparency",
                   description:
                     "Immutable blockchain records ensure complete transparency and build trust among participants.",

@@ -47,7 +47,7 @@ export default function ChitFundPage() {
   const [nextDeadline, setNextDeadline] = useState("");
   const { fundid } = useParams();
   const { address } = useAccount();
-  const { writeContract } = useWriteContract();
+  const { writeContract, error: ContractError } = useWriteContract();
 
   const { data: chitFundData, isLoading: isChitFundLoading } = useReadContract({
     abi: ChitFundAbi,
@@ -85,8 +85,8 @@ export default function ChitFundPage() {
 
   const handlePoolIn = async () => {
     setIsLoading(true);
-    console.log(contributionAmount.toString());
-    
+    console.log(contributionAmount);
+
     try {
       writeContract({
         address: fundid,
@@ -133,8 +133,23 @@ export default function ChitFundPage() {
     }
   };
 
+  const handleGetCollateral = async () => {
+    setIsLoading(true);
+    try {
+      writeContract({
+        address: fundid,
+        abi: ChitFundAbi,
+        functionName: "returnAllCollateral",
+      });
+    } catch (error) {
+      console.error("Error claiming fund:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const populateEthereumPrice = async () => {
-    setEthereumPrice(await fetchEthereumPrice());
+    if (!ethereumPrice) setEthereumPrice(await fetchEthereumPrice());
   };
 
   useEffect(() => {
@@ -147,7 +162,7 @@ export default function ChitFundPage() {
 
       const endTime =
         (parseInt(chitFundData[10]) +
-          (parseInt(chitFundData[6]) * parseInt(chitFundData[9]))) *
+          parseInt(chitFundData[6]) * parseInt(chitFundData[9])) *
         1000;
       const updateCountdown = () => {
         const now = new Date().getTime();
@@ -180,10 +195,29 @@ export default function ChitFundPage() {
     }
   }, [chitFundData]);
 
+  useEffect(() => {
+    if (ContractError) console.log(ContractError);
+  }, [ContractError]);
+
   const renderActionButton = () => {
     if (!userDetail) return null;
 
-    console.log(userDetail);
+    if (chitFundData[5] > chitFundData[6]) {
+      return (
+        <Button
+          onClick={handleGetCollateral}
+          disabled={isLoading}
+          className="w-full md:w-auto bg-yellow-500 hover:bg-yellow-600"
+        >
+          {isLoading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Shield className="mr-2 h-4 w-4" />
+          )}
+          {isLoading ? "Processing..." : "Get Collateral"}
+        </Button>
+      );
+    }
 
     if (!userDetail[0]) {
       return (
@@ -219,7 +253,7 @@ export default function ChitFundPage() {
       );
     }
 
-    if (chitFundData && chitFundData[2] === address && !userDetail[3]) {
+    if (chitFundData && chitFundData[12] === address && !userDetail[3]) {
       return (
         <Button
           onClick={handleClaimFund}
@@ -312,7 +346,7 @@ export default function ChitFundPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-sm font-mono">
-              {chitFundData[2]}
+              {chitFundData[12]}
             </CardContent>
           </Card>
           <Card>

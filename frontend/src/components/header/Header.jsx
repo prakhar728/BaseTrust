@@ -12,8 +12,11 @@ const Header = () => {
     <header className="sticky top-0 z-10 bg-white border-b border-gray-200">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <a href="/" className="flex items-center">
-          <Shield className="h-6 w-6 text-primary mr-2" />
-          <span className="text-xl font-bold text-primary">BaseTrust</span>
+          <img
+            src="/BaseTrustLogo.png"
+            alt="BaseTrust Logo"
+            className="h-14"
+          />
         </a>
         <nav className="hidden md:flex space-x-4">
           <a href="/app" className="text-gray-600 hover:text-primary">

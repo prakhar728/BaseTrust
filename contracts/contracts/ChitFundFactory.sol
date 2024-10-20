@@ -38,7 +38,6 @@ contract ChitFundFactory {
             _participants.length == _totalParticipants,
             "Participants count mismatch"
         );
-
         require(
             _collateralPercentage > 0 && _collateralPercentage <= 100,
             "Collateral percentage should be between 1 and 100"
@@ -47,19 +46,19 @@ contract ChitFundFactory {
         // Deploy a new ChitFund contract
         ChitFund newChitFund = new ChitFund(
             msg.sender,
-            _name, // Pass the name
+            _name,
             _contributionAmountInEther,
             _totalParticipants,
             _totalCycles,
             _cycleDuration,
             _startTime,
             _participants,
-            _collateralPercentage // Pass the collateral percentage to ChitFund contract
+            _collateralPercentage
         );
 
         chitFunds.push(newChitFund);
 
-         // Record this chit fund for each participant
+        // Record this chit fund for each participant
         for (uint256 i = 0; i < _participants.length; i++) {
             userChitFunds[_participants[i]].push(address(newChitFund));
         }
